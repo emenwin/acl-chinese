@@ -46,7 +46,7 @@ defmethod 和 defun 一样，只不过是语言的一个普通组成部分。
       (height width))
 
    (defclass circle ()
-      radius))
+      (radius))
 
    (defmethod area ((x rectangle))
       (* (slot-value x 'height) (slot-value x 'width)))
