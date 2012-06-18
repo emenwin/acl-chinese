@@ -90,11 +90,99 @@ defmethod 和 defun 一样，只不过是语言的一个普通组成部分。
 
 
 
-11.2 Class and Instances
+11.2 类和实例(Class and Instances)
 ==================================================
+在4.6节中，我们学到了创建 structure 的两个步骤：首先我们调用 defstruct 来定义结构体的形式，然后通过一个特定的函数，
+比如 make-point, 来创建它。创建实例同样需要两个类似的步骤。首先我们定义一个类(class), 用 defclass:::
 
-11.3 Slot Properties
+(defclass circle ()
+   (radius center))
+
+这个定义表示，circle 类的实例将会包含2个 slots （就像 structure 中的 fields），分别命名为 radius 和 center.
+要创建这个类的实例，我们不是通过调用特定的函数，而是调用一个通用的 make-instance 函数来实现，第一个参数设置成要创建的类的名字：::
+
+> (setf c (make-instance 'circle))
+#<Circle #XC27496>
+
+要给这个实例的 slots 赋值，我们可以用 setf:::
+
+> (setf (slot-value c 'radius) 1)
+1
+
+和 structure 的 fields 一样，如果 slots 没有初始化，它们的值为 undefined.
+
+11.3 Slot 的属性(Slot Properties)
 ================================
+defclass 的第三个参数必须是包含着一组 slot 定义的列表。如上例所示，最简单的 slot 定义形式是一个 symbol, 表示
+slot 的名字。在一般情况下，slot 的定义形式可以是一个列表，其第一个元素为名称，接下来的是一些属性，而属性的定义
+形式和关键字参数类似。
+
+通过 :accessor 来定义一个 slot, 我们隐式的定义了一个访问那个 slot 的函数，这样，就不需要调用 slot-value 了。
+如果我们将 circle 类的定义修改如下：::
+
+(defclass circle ()
+   ((radius :accessor circle-radius)
+    (center :accessor circle-center)))
+
+那我们就可以通过 circle-radius 和 circle-center 来引用 circle 类的 slots:::
+
+> (setf c (make-instance 'circle))
+#<Circle #XC5C726>
+
+> (setf circle-radius c) 1)
+1
+> (circle-radius c)
+1
+
+还可以指定 :writer 或 :reader, 而不是 :accessor, 这样我们可以仅得到上面定义的一半的行为（只读或者仅仅可写）。
+
+要指定 slot 的默认值，我们必须用 :initform 参数。如果我们想在 make-instance 的调用中初始化 slot, 我们可以
+通过 :initarg 定义一个参数名。我们的类定义现在可以改成如下形式：::
+
+(defclass circle ()
+   ((radius :accessor circle-radius
+            :initarg :radius
+            :initform 1)
+   (center  :accessor circle-center
+            :initarg :center
+            :initform (cons 0 0))))
+
+现在，我们在创建 circle 类的实例时，既可以通过上面通过 :initarg 定义的关键字参数名来给 slot 赋值，也可以
+让 slot 的 value 保持 :initform 中定义的默认值。::
+
+> (setf c (make-instance 'circle :radius 3))
+#<Circle #XC2DE0E>
+> (circle-radius c)
+3
+> (circle-center c)
+(0 . 0)
+
+注意，:initargs 比 :initform 的优先级要高。
+
+我们可以指定某些 slots 的值是共享的——也就是说，他们的值对每一个类实例而言都是相同的。实现的方式是在 slot 的定义中
+加上 :allocation :class. (另一个可选值是 :allocation :instance, 但因为这是默认值，所以不需要显式指明）。
+如果我们在一个实例中修改这种 slot 的值，其他所有 instances 中的该 slot 也会获得同样的值。所以我们要用共享的 slots 来
+保存所有实例的共性。
+
+例如，假设我们要模拟一组小报(tabloids)的行为。在我们的模拟中，我们想要表示下列事实：当某一个 tabloid 报道某个主题时，其他的也一样。
+我们可以通过让所有实例共享一个 slot 的方式来实现。tabloid 类可定义如下：::
+
+(defclass tabloid ()
+   ((top-story :accessor tabloid-story
+               :allocation :class)))
+
+现在，如果我们创建两个 tabloids, 如果某个报道在其中任一个 tabloid 上成为首页新闻，那么它也会同时成为另一个 tabloid 的首页新闻：::
+
+> (setf daily-blab (make-instance 'tabloid)
+      unsolicited-mail (make-instance 'tabloid))
+#<Tabloid #XC2AB16>
+> (setf (tabloid-story (daily-blab) 'adultery-of-senator)
+ADULTERY-OF-SENATOR
+> (tabloid-story unsolicited-mail)
+ADULTERY-OF-SENATOR
+
+另外，如果指定了 :documentation 属性，则可以用来表示该 slot 的文档说明。而 :type 则可以用来指定该 slot 中元素的类型。
+类型的声明将在 13.3 节中讲解。
 
 11.4 Superclasses
 ===================================================
