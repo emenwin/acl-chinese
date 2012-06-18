@@ -77,7 +77,7 @@ defmethod 和 defun 一样，只不过是语言的一个普通组成部分。
 
 当我们创建 colored-circle 的实例时，我们会看到两种继承：
 
-1. colored-circle 的实例会拥有2个槽：radius (从 circle 类继承而来），以及 color（从 colored 类继承而来）。
+1. colored-circle 的实例会拥有2个 slots：radius (从 circle 类继承而来），以及 color（从 colored 类继承而来）。
 2. 因为没有为 colored-circle 类的实例显式定义 area 方法，如果我们对 colored-circle 的实例调用 area 方法，
    我们会调用到定义在 circle 类上的方法。
 
